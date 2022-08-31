@@ -72,24 +72,46 @@ for i in tqdm(range(len(queries))):
             print(greviews)
             greviews = [ps.remove_special_chars(i) for i in greviews.split(" ")]
             greviews = [i for i in greviews if isDigit(i)][0]
-            print("Rating: ", rating, "Number of Reviews: ", greviews)
+#             print("Rating: ", rating, "Number of Reviews: ", greviews)
             final_df['firstName'].append(df_not_missing.iloc[i]['firstName'])
             final_df['lastName'].append(df_not_missing.iloc[i]['lastName'])
             final_df['clinicName'].append(df_not_missing.iloc[i]['name'])
             final_df['baseCity'].append(df_not_missing.iloc[i]['baseCity'])
-            print(df_not_missing.iloc[i]['baseCity'])
+#             print(df_not_missing.iloc[i]['baseCity'])
             final_df['GoogleNRs'].append(float(greviews))
+            
             if rating is None:
                 print("Appending None!")
                 final_df['rating'].append("NA")
             else:
+                address = soup.find_all("span", class_="LrzXr")
+#                 print(df_not_missing.iloc[i]['baseCity'] in address[0].get_text())
+#                 print(address[0].get_text())
+                text = address[0].get_text()
+                text = ps.remove_accented_chars(text)
+                text = ps.remove_special_chars(text)
+                text = ps.remove_html_tags(text)
+                
+                text = text.split(" ")
+                print(text)
+                print(text[-4:][:-1])
+                city = " ".join(text[-4:][:-1])
+                
+                print("city: ", city)
+
+                
+                final_df['extractedCity'].append(city)
+                if city == df_not_missing.iloc[i]['baseCity']:
+                    print("Cities are matched!")
+                    final_df['matched'].append(True)
+                else:
+                    final_df['matched'].append(False)
                 final_df['rating'].append(rating)
-            print(div.get_text())
+                
+#             print(div.get_text())
 
 
 df_final = pd.DataFrame(final_df)
 print(df_final)
 
-pd.merge(df, df_final, how='outer').drop(["clinicName", "query"], axis=1).to_csv("full_output_30_aug_2022.csv", index=False)
-
-print(pd.read_csv("full_output_30_aug_2022.csv"))
+pd.merge(df, df_final, how='outer').to_csv("full_output_30_aug_2022.csv", index=False)
